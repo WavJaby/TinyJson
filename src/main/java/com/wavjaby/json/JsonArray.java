@@ -168,7 +168,7 @@ public class JsonArray implements Serializable, Iterable<Object> {
         Object obj = getObject(index);
         if (obj instanceof String)
             return Long.parseLong((String) obj);
-        if (!(obj instanceof Long))
+        if (obj instanceof Integer)
             return (long) (int) obj;
         return (long) obj;
     }
@@ -181,6 +181,8 @@ public class JsonArray implements Serializable, Iterable<Object> {
         Object obj = getObject(index);
         if (obj instanceof String)
             return Double.parseDouble((String) obj);
+        if (obj instanceof Float)
+            return (double) (float) obj;
         return (double) obj;
     }
 
@@ -194,6 +196,10 @@ public class JsonArray implements Serializable, Iterable<Object> {
 
     public JsonObject get(int index) {
         return (JsonObject) getObject(index);
+    }
+
+    public JsonArray getJsonArray(int index) {
+        return (JsonArray) getObject(index);
     }
 
     //setter

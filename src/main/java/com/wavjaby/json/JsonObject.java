@@ -205,7 +205,7 @@ public class JsonObject implements Serializable {
         Object obj = getObject(key);
         if (obj instanceof String)
             return Long.parseLong((String) obj);
-        if (!(obj instanceof Long))
+        if (obj instanceof Integer)
             return (long) (int) obj;
         return (long) obj;
     }
