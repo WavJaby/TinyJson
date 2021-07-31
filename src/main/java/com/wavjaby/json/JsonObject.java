@@ -323,8 +323,7 @@ public class JsonObject implements Serializable {
         int preserveLength = Math.min(items.length, newLength);
         if (preserveLength > 0) {
             Item[] copy = new Item[newLength];
-            System.arraycopy(items, 0, copy, 0,
-                    Math.min(items.length, newLength));
+            System.arraycopy(items, 0, copy, 0, items.length);
             return copy;
         }
         throw new ArrayIndexOutOfBoundsException("negative array size");

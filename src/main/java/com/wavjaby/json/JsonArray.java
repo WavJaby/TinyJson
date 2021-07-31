@@ -80,7 +80,7 @@ public class JsonArray implements Serializable, Iterable<Object> {
                         } else if (value.equalsIgnoreCase("false")) {
                             add(false);
                         } else if (value.equalsIgnoreCase("null")) {
-                            add((Object) null);
+                            add(null);
                         }
                         //是數字
                         else if (isInt) {
@@ -238,13 +238,12 @@ public class JsonArray implements Serializable, Iterable<Object> {
     /**
      * extend array
      */
-    private Item[] arrayAddLength() {
+    private Object[] arrayAddLength() {
         int newLength = (int) (items.length * 1.5);
         int preserveLength = Math.min(items.length, newLength);
         if (preserveLength > 0) {
-            Item[] copy = new Item[newLength];
-            System.arraycopy(items, 0, copy, 0,
-                    Math.min(items.length, newLength));
+            Object[] copy = new Object[newLength];
+            System.arraycopy(items, 0, copy, 0, items.length);
             return copy;
         }
         throw new ArrayIndexOutOfBoundsException("negative array size");
