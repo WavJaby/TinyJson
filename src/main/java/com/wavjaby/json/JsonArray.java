@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 public class JsonArray implements Serializable, Iterable<Object> {
-    private final int arraySize = 1024;
+    private final int arraySize = 10;
     private Object[] items = new Object[arraySize];
     public int length = 0;
 
