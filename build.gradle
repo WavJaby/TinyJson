@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-group 'com.github.WavJaby'
+group 'com.wavjaby.json'
 
 repositories {
     mavenCentral()
@@ -73,11 +73,11 @@ publishing {
 }
 
 wrapper {
-    gradleVersion = "7.1"
+    gradleVersion = "7.1.1"
     distributionType = Wrapper.DistributionType.ALL
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.13'
+    testImplementation 'junit:junit:4.13.2'
 }
 
