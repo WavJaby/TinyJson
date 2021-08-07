@@ -4,15 +4,12 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public class JsonArray implements Serializable, Iterable<Object> {
+public class JsonArray extends ArrayValueGetter implements Serializable, Iterable<Object> {
     private final int arraySize = 10;
     private Object[] items = new Object[arraySize];
     public int length = 0;
 
-    public int EndPos;
-
-    public JsonArray() {
-    }
+    int EndPos;
 
     public JsonArray(String input) {
         if (input.length() == 0)
@@ -21,136 +18,88 @@ public class JsonArray implements Serializable, Iterable<Object> {
         while (input.charAt(i) != '{' && input.charAt(i) != '[') {
             i++;
             if (i >= input.length())
-                return;
+                throw new JsonException("JsonArray must start with '['");
         }
         if (input.charAt(i) == '{') {
-            try {
-                throw new ClassCastException("input data is JsonObject, not JsonArray");
-            } catch (ClassCastException e) {
-                e.printStackTrace();
-            }
-            return;
+            throw new JsonException("JsonArray must start with '['");
         }
         i++;
 
-        boolean inValue = false;
-        int stringStart = -1;
-        int stringEnd = -1;
-
-        int valueStart = -1;
-        int valueEnd = -1;
-
-        boolean isInt = true;
-        boolean jsonValue = false;
+        boolean moreValue = true;
         for (; i < input.length(); i++) {
             char thisChar = input.charAt(i);
 
-            //跳過沒在"裡的空白
-            if (!inValue && (thisChar == ' ' || thisChar == '\r' || thisChar == '\n')) {
+            //skip char
+            if (thisChar <= ' ') {
                 continue;
             }
 
-            //不是int
-            if (!inValue && thisChar == '.') {
-                isInt = false;
+            //find value start
+            if (!moreValue && thisChar == ',') {
+                moreValue = true;
+                continue;
             }
 
-            //找到"
-            if (thisChar == '"' && input.charAt(i - 1) != '\\') {
-                if (inValue) {
-                    inValue = false;
-                    stringEnd = i;
-                } else {
-                    inValue = true;
-                    stringStart = i + 1;
-                }
-            }
-
-            //值的結束
-            if (!inValue && (thisChar == ',' || thisChar == ']')) {
-                //不是上個value不是json或空陣列
-                if (!jsonValue && (valueStart != -1 && valueEnd != -1))
-                    //值不是string
-                    if (stringStart == -1) {
-                        String value = input.substring(valueStart, valueEnd);
-
-                        //是布林值
-                        if (value.equalsIgnoreCase("true")) {
-                            add(true);
-                        } else if (value.equalsIgnoreCase("false")) {
-                            add(false);
-                        } else if (value.equalsIgnoreCase("null")) {
-                            add(null);
-                        }
-                        //是數字
-                        else if (isInt) {
-                            //是long
-                            if (value.length() > 9) {
-                                long valLong = Long.parseLong(value);
-                                //是long
-                                if (valLong > Integer.MAX_VALUE || valLong < Integer.MIN_VALUE) {
-                                    add(valLong);
-                                }
-                                //是int
-                                else {
-                                    add((int) valLong);
-                                }
-                            }
-                            //是int
-                            else {
-                                int valInt = Integer.parseInt(value);
-                                add(valInt);
-                            }
-                        }
-                        //是浮點數
-                        else {
-                            double valDouble = Double.parseDouble(value);
-                            //是double
-                            if (valDouble > Integer.MAX_VALUE || valDouble < Integer.MIN_VALUE) {
-                                add(valDouble);
-                            } else {
-                                add((float) valDouble);
-                            }
-                        }
-                    } else {
-                        String value = input.substring(stringStart, stringEnd);
-                        add(value);
+            //find string
+            if (moreValue && thisChar == '"') {
+                i++;
+                int start = i;
+                while (input.charAt(i) != '"' || (input.charAt(i - 1) == '\\' && input.charAt(i) == '"')) {
+                    i++;
+                    if (i == input.length()) {
+                        throw new JsonException("String must end with '\"'");
                     }
-
-                jsonValue = false;
-                stringStart = -1;
-                valueStart = -1;
+                }
+                String value = input.substring(start, i);
+                add(value);
+                moreValue = false;
+                continue;
             }
 
-            //值是json
-            if (!inValue && thisChar == '{') {
+            //is JsonObject
+            if (moreValue && thisChar == '{') {
                 JsonObject jsonObject = new JsonObject(input.substring(i));
                 add(jsonObject);
                 i += jsonObject.EndPos;
-                jsonValue = true;
+                moreValue = false;
+                continue;
             }
 
-            //值是array
-            if (!inValue && thisChar == '[') {
+            //is JsonArray
+            if (moreValue && thisChar == '[') {
                 JsonArray jsonArray = new JsonArray(input.substring(i));
                 add(jsonArray);
                 i += jsonArray.EndPos;
-                jsonValue = true;
+                moreValue = false;
+                continue;
             }
 
-            //到底了
-            if (!inValue && thisChar == ']') {
-                break;
+            //is other value
+            if (moreValue) {
+                int valueEnd = i;
+                boolean isInt = true;
+                char nextChar;
+                while ((nextChar = input.charAt(valueEnd++)) != ',' && nextChar != ']') {
+                    //not int
+                    if (nextChar == '.' || nextChar == 'e' || nextChar == 'E')
+                        isInt = false;
+                    if (valueEnd == input.length())
+                        throw new JsonException("JsonArray must end with ']'");
+                }
+                if (valueEnd - i > 1) {
+                    String value = input.substring(i, valueEnd - 1);
+                    add(toNumber(value, isInt));
+                    moreValue = false;
+                } else if (length > 0)
+                    throw new JsonException("JsonArray[" + length + "] missing value");
             }
 
-            //找值的開頭與結束
-            if (!inValue) {
-                if (valueStart == -1 && thisChar != ',' && thisChar != '[')
-                    valueStart = i;
-                valueEnd = i + 1;
+            if (thisChar == ']') {
+                EndPos = i;
+                return;
             }
         }
-        EndPos = i;
+        throw new JsonException("JsonArray must end with ']'");
     }
 
     public String getString(int index) {
@@ -191,7 +140,9 @@ public class JsonArray implements Serializable, Iterable<Object> {
     }
 
     public Object getObject(int index) {
-        return index >= length ? null : items[index];
+        if (index < length)
+            return items[index];
+        throw new ArrayIndexOutOfBoundsException();
     }
 
     public JsonObject get(int index) {
@@ -296,7 +247,10 @@ public class JsonArray implements Serializable, Iterable<Object> {
             }
 
             tabLen = new String(spaceLen);
-            builder.append("[\n");
+            if (this.length > 0)
+                builder.append("[\n");
+            else
+                builder.append("[");
         }
 
         for (int i = 0; i < length; ++i) {
