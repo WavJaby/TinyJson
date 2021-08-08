@@ -1,5 +1,7 @@
 import com.wavjaby.json.JsonArray;
 import com.wavjaby.json.JsonObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -8,8 +10,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class test {
 
@@ -24,26 +25,67 @@ public class test {
 
     @Test
     public void jsonArrayTest() {
-        JsonArray jsonArray = new JsonArray("[1,2,3]");
-        System.out.println(jsonArray.toStringBeauty());
-        jsonArray = new JsonArray("[[1,2,3],[4,5,6]]");
-        System.out.println(jsonArray.toStringBeauty());
+        String input = "[1,2,3]";
+        JsonArray jsonArray = new JsonArray(input);
+        assertEquals(input, jsonArray.toString());
+        input = "[[1,2,3],[4,5,6]]";
+        jsonArray = new JsonArray(input);
+        assertEquals(input, jsonArray.toString());
     }
 
     @Test
     public void jsonObjectTest() {
-        JsonObject jsonObject = new JsonObject("{\"a\":\"abc\"}");
-        System.out.println(jsonObject.toStringBeauty());
-        jsonObject = new JsonObject("{\"a\":{\"a\":\"abc\",\"b\":[123,\"456\"]}}");
-        System.out.println(jsonObject.toStringBeauty());
+        String input = "{\"a\":\"abc\"}";
+        JsonObject jsonObject = new JsonObject(input);
+        assertEquals(input, jsonObject.toString());
+        input = "{\"a\":{\"a\":\"abc\",\"b\":[123,\"456\"]}}";
+        jsonObject = new JsonObject(input);
+        assertEquals(input, jsonObject.toString());
     }
 
-    //    @Test
+    @Test
+    public void jsonArrayValueTest() {
+        JsonArray jsonArray = new JsonArray("[[1,2,3],[4,5,6]]");
+        assertEquals(1, (int) jsonArray.getArray(0).get(0));
+        assertEquals(1, jsonArray.getArray(0).getInt(0));
+    }
+
+    @Test
     public void speedTest() {
-        String result = getDataFromUrl("https://data.ecochia.io/api/explorer/price/?days=" + 10);
+        String result = getDataFromUrl("https://data.ecochia.io/api/explorer/price/?days=" + 90);
         if (result == null) return;
-        JsonArray price = new JsonObject(result).getArray("message");
-        System.out.println(price.toStringBeauty());
+        int times = 1000;
+        long startTime;
+
+        for (int i = 0; i < times; i++) {
+            String a = "abc";
+            for (int j = 0; j < 1000; j++) {
+                a += "abc";
+            }
+        }
+
+
+        startTime = System.nanoTime();
+        for (int i = 0; i < times; i++) {
+            JsonArray price = new JsonObject(result).getArray("message");
+            for (Object j : price) {
+                JsonArray arr = (JsonArray) j;
+                assertNotNull(arr.getString(0));
+                assertNotNull(arr.getDouble(1));
+            }
+        }
+        System.out.println((double) ((System.nanoTime() - startTime) / times) / 1000000d);
+
+        startTime = System.nanoTime();
+        for (int i = 0; i < times; i++) {
+            JSONArray price = new JSONObject(result).getJSONArray("message");
+            for (Object j : price) {
+                JSONArray arr = (JSONArray) j;
+                assertNotNull(arr.getString(0));
+                assertNotNull(arr.getDouble(1));
+            }
+        }
+        System.out.println((double) ((System.nanoTime() - startTime) / times) / 1000000d);
     }
 
 

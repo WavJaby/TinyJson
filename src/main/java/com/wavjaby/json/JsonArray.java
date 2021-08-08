@@ -102,55 +102,11 @@ public class JsonArray extends ArrayValueGetter implements Serializable, Iterabl
         throw new JsonException("JsonArray must end with ']'");
     }
 
-    public String getString(int index) {
-        return String.valueOf(getObject(index));
-    }
-
-    public int getInteger(int index) {
-        Object obj = getObject(index);
-        if (obj instanceof String)
-            return Integer.parseInt((String) obj);
-        return (int) obj;
-    }
-
-    public long getLong(int index) {
-        Object obj = getObject(index);
-        if (obj instanceof String)
-            return Long.parseLong((String) obj);
-        if (obj instanceof Integer)
-            return (long) (int) obj;
-        return (long) obj;
-    }
-
-    public float getFloat(int index) {
-        return (float) getObject(index);
-    }
-
-    public double getDouble(int index) {
-        Object obj = getObject(index);
-        if (obj instanceof String)
-            return Double.parseDouble((String) obj);
-        if (obj instanceof Float)
-            return (double) (float) obj;
-        return (double) obj;
-    }
-
-    public boolean getBoolean(int index) {
-        return (boolean) getObject(index);
-    }
-
+    @Override
     public Object getObject(int index) {
         if (index < length)
             return items[index];
         throw new ArrayIndexOutOfBoundsException();
-    }
-
-    public JsonObject get(int index) {
-        return (JsonObject) getObject(index);
-    }
-
-    public JsonArray getJsonArray(int index) {
-        return (JsonArray) getObject(index);
     }
 
     //setter
@@ -267,13 +223,11 @@ public class JsonArray extends ArrayValueGetter implements Serializable, Iterabl
                 builder.append(tabLen).append(item);
             }
 
-            if (i < length - 1) {
+            if (i < length - 1)
                 builder.append(",");
-            }
-
-            if (index > 0) {
+            //beautiful
+            if (index > 0)
                 builder.append("\n");
-            }
         }
 
         if (index > 0) {

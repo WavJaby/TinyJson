@@ -299,7 +299,7 @@ public class JsonObject extends JsonValueGetter implements Serializable {
 
         for (int i = 0; i < this.length; ++i) {
             Item item = this.items[i];
-            builder.append(tabLen).append("\"").append(item.getKey()).append("\": ");
+            builder.append(tabLen).append("\"").append(item.getKey()).append(index < 0 ? "\":" : "\": ");
             if (item.getValue() == null) {
                 builder.append("null");
             } else if (item.getValue().getClass() == JsonObject.class) {
@@ -312,13 +312,11 @@ public class JsonObject extends JsonValueGetter implements Serializable {
                 builder.append(item.getValue());
             }
 
-            if (i < this.length - 1) {
+            if (i < length - 1)
                 builder.append(",");
-            }
-
-            if (index > 0) {
+            //beautiful
+            if (index > 0)
                 builder.append("\n");
-            }
         }
 
         if (index > 0) {
