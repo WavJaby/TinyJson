@@ -4,9 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -116,6 +114,15 @@ public class test {
         System.out.println("TinyJson avg: " + (double) (tinyJsonTime / avgTimes) / 1000000d + "ms");
     }
 
+    @Test
+    public void test() {
+        //get video info
+        String url = "https://youtubei.googleapis.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
+        String payload = "{\"videoId\":\"" + "hw1b6fnWYc4" + "\",\"context\":{\"client\":{\"hl\":\"zh\",\"gl\":\"TW\",\"clientName\":\"WEB\",\"clientVersion\":\"2.20210330.08.00\"}}}";
+        String result = getUrl(url, payload);
+        new JsonObject(result);
+    }
+
     public static String getDataFromUrl(String urlString) {
         try {
             //connection api
@@ -141,6 +148,36 @@ public class test {
             in.close();
             connection.disconnect();
             return result.toString();
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            return null;
+        }
+    }
+
+    public String getUrl(String input, String payload) {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(input).openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            connection.setUseCaches(false);
+            connection.setDoOutput(true);
+            //post
+            OutputStream payloadOut = connection.getOutputStream();
+            payloadOut.write(payload.getBytes(StandardCharsets.UTF_8));
+            payloadOut.flush();
+            //get
+            InputStream in;
+            if (connection.getResponseCode() > 399)
+                in = connection.getErrorStream();
+            else
+                in = connection.getInputStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buff = new byte[1024];
+            int length;
+            while ((length = in.read(buff)) > 0) {
+                out.write(buff, 0, length);
+            }
+            return out.toString("UTF8");
         } catch (IOException e) {
             System.err.println(e.getMessage());
             return null;
