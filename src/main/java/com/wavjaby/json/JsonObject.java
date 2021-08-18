@@ -8,114 +8,60 @@ public class JsonObject extends JsonValueGetter implements Serializable {
     public int length = 0;
     JsonArray isJsonArray = null;
 
-    int EndPos;
 
     public JsonObject(String input) {
-        if (input.length() == 0)
-            return;
-        int i = 0;
-        while (input.charAt(i) != '{' && input.charAt(i) != '[') {
-            i++;
-            if (i == input.length()) {
-                throw new JsonException("JsonObject must start with '{'");
-            }
-        }
+        this(new JsonObjectReader(input));
+    }
 
-        if (input.charAt(i) == '[') {
-            isJsonArray = new JsonArray(input);
+    public JsonObject(JsonObjectReader reader) {
+        reader.findJsonStart();
+        if (reader.thisChar() == '[') {
+            isJsonArray = new JsonArray(reader);
             return;
         }
-
-
-        boolean isJsonOrArray = false;
-        boolean findKey = false;
         String key = null;
-        String stringValue = null;
-
-        boolean findValue = false;
-
-        for (; i < input.length(); i++) {
-            char thisChar = input.charAt(i);
-
-            //skip char
-            if (thisChar <= ' ') {
-                continue;
+        boolean isValue = false;
+        char nextChar;
+        while ((nextChar = reader.nextChar()) != '\0') {
+            if (nextChar == ',') {
+                if (isValue)
+                    throw new JsonException("missing value at: " + reader.i);
+                nextChar = reader.nextChar();
             }
-
-            //find string
-            if (thisChar == '"') {
-                i++;
-                int start = i;
-                while (input.charAt(i) != '"' || (input.charAt(i - 1) == '\\' && input.charAt(i) == '"')) {
-                    i++;
-                    if (i == input.length()) {
-                        throw new JsonException("String must end with '\"'");
-                    }
-                }
-                if (!findKey) {
-                    key = input.substring(start, i);
-                    findKey = true;
-                } else if (findValue) {
-                    stringValue = input.substring(start, i);
-                }
-                continue;
-            }
-
-            //key end, value start
-            if (findKey && thisChar == ':') {
-                findValue = true;
-                continue;
-            }
-
-            //is JsonObject
-            if (findValue && thisChar == '{') {
-                JsonObject jsonObject = new JsonObject(input.substring(i));
-                append(new Item(key, jsonObject));
-                i += jsonObject.EndPos;
-                isJsonOrArray = true;
-                continue;
-            }
-
-            //is JsonArray
-            if (findValue && thisChar == '[') {
-                JsonArray jsonArray = new JsonArray(input.substring(i));
-                append(new Item(key, jsonArray));
-                i += jsonArray.EndPos;
-                isJsonOrArray = true;
-                continue;
-            }
-
-            //value end
-            if (findValue) {
-                int valueEnd = i;
-                boolean isInt = true;
-                char nextChar;
-                while ((nextChar = input.charAt(valueEnd++)) != ',' && nextChar != '}') {
-                    //not int
-                    if (nextChar == '.' || nextChar == 'e' || nextChar == 'E')
-                        isInt = false;
-                    if (valueEnd == input.length())
-                        throw new JsonException("JsonObject must end with ']'");
-                }
-                //value is string
-                if (stringValue != null) {
-                    append(new Item(key, stringValue));
-                    stringValue = null;
-                }
-                //value is number
-                else if (valueEnd - i > 1) {
-                    String value = input.substring(i, valueEnd - 1);
-                    append(new Item(key, toNumber(value, isInt)));
-                } else if (!isJsonOrArray && length > 0)
-                    throw new JsonException("JsonObject[\"" + key + "\"] missing value");
-                findKey = false;
-                findValue = false;
-                isJsonOrArray = false;
-            }
-
-            if (thisChar == '}') {
-                EndPos = i;
+            if (nextChar == '}') {
+                if (isValue)
+                    throw new JsonException("missing value at: " + reader.i);
                 return;
+            }
+            switch (nextChar) {
+                case '"':
+                    if (isValue) {
+                        append(new Item(key, reader.readString()));
+                        isValue = false;
+                    } else
+                        key = reader.readString();
+                    break;
+                case ':':
+                    if (!isValue)
+                        isValue = true;
+                    break;
+                case '[':
+                    if (isValue) {
+                        append(new Item(key, new JsonArray(reader)));
+                        isValue = false;
+                    }
+                    break;
+                case '{':
+                    if (isValue) {
+                        append(new Item(key, new JsonObject(reader)));
+                        isValue = false;
+                    }
+                    break;
+                default:
+                    if (isValue) {
+                        append(new Item(key, reader.readValue()));
+                        isValue = false;
+                    }
             }
         }
         throw new JsonException("JsonObject must end with '}'");
@@ -199,7 +145,7 @@ public class JsonObject extends JsonValueGetter implements Serializable {
             }
             return this;
         }
-        return null;
+        throw new JsonException("This is JsonArray, use \"toJsonArray\" to get it");
     }
 
     @SuppressWarnings("unused")
@@ -254,76 +200,69 @@ public class JsonObject extends JsonValueGetter implements Serializable {
         return -1;
     }
 
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (!(obj instanceof JsonObject))
-//            return false;
-//        JsonObject jsonObject = (JsonObject) obj;
-//        if(jsonObject.length != length)
-//            return false;
-//
-//        return true;
-//    }
-
     /**
      * to string
      */
     @Override
     public String toString() {
-        return this.isJsonArray != null ? this.isJsonArray.toString() : this.toString(-1);
-    }
+        if (this.isJsonArray != null)
+            return this.isJsonArray.toString();
 
-    public String toStringBeauty() {
-        return this.isJsonArray != null ? this.isJsonArray.toStringBeauty() : this.toString(1);
-    }
-
-    String toString(int index) {
-        String tabLen = "";
         StringBuilder builder = new StringBuilder();
-        if (index < 0) {
-            builder.append("{");
-            --index;
-        } else {
-            byte[] spaceLen = new byte[index * 2];
-
-            for (int i = 0; i < index * 2; ++i) {
-                spaceLen[i] = (byte) (spaceLen[i] + 32);
-            }
-
-            tabLen = new String(spaceLen);
-            if (length > 0)
-                builder.append("{\n");
-            else
-                builder.append("{");
-        }
-
-        for (int i = 0; i < this.length; ++i) {
+        builder.append('{');
+        for (int i = 0; i < length; ++i) {
             Item item = this.items[i];
-            builder.append(tabLen).append("\"").append(item.getKey()).append(index < 0 ? "\":" : "\": ");
-            if (item.getValue() == null) {
+            builder.append('\"').append(item.getKey()).append('\"').append(':');
+            if (item.getValue() == null)
                 builder.append("null");
-            } else if (item.getValue().getClass() == JsonObject.class) {
-                builder.append(((JsonObject) item.getValue()).toString(index + 1));
-            } else if (item.getValue().getClass() == JsonArray.class) {
-                builder.append(((JsonArray) item.getValue()).toString(index + 1));
-            } else if (item.getValue().getClass() == String.class) {
-                builder.append("\"").append(item.getValue()).append("\"");
-            } else {
+            else if (item.getValue() instanceof String)
+                builder.append('\"').append(item.getValue()).append('\"');
+            else
                 builder.append(item.getValue());
-            }
 
             if (i < length - 1)
                 builder.append(",");
-            //beautiful
-            if (index > 0)
-                builder.append("\n");
         }
+        builder.append('}');
+        return builder.toString();
+    }
 
-        if (index > 0) {
-            builder.append(tabLen.substring(2));
+    public String toStringBeauty() {
+        return this.isJsonArray != null ? this.isJsonArray.toStringBeauty() : this.toString(1, null);
+    }
+
+    String toString(int index, char[] lastTab) {
+        StringBuilder builder = new StringBuilder();
+        char[] tab = new char[index * 2];
+        for (int i = 0; i < index * 2; i++) {
+            tab[i] = ' ';
         }
+        builder.append('{');
+        if (length > 0)
+            builder.append('\n');
 
+        for (int i = 0; i < this.length; ++i) {
+            Item item = this.items[i];
+            builder.append(tab).append('\"').append(item.getKey()).append(index < 0 ? "\":" : "\": ");
+            if (item.getValue() == null)
+                builder.append("null");
+            else if (item.getValue() instanceof JsonObject)
+                builder.append(((JsonObject) item.getValue()).toString(index + 1, tab));
+            else if (item.getValue() instanceof JsonArray)
+                builder.append(((JsonArray) item.getValue()).toString(index + 1, tab));
+            else if (item.getValue() instanceof String)
+                builder.append('\"').append(item.getValue()).append('\"');
+            else
+                builder.append(item.getValue());
+
+            if (i < length - 1)
+                builder.append(",");
+            builder.append("\n");
+        }
+        if (lastTab != null && length > 0)
+            builder.append(lastTab);
         builder.append("}");
+
         return builder.toString();
     }
 }

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.*;
 
@@ -52,50 +53,69 @@ public class test {
 
     @Test
     public void speedTest() {
-        String result = getDataFromUrl("https://data.ecochia.io/api/explorer/price/?days=" + 90);
+        long eTime = System.currentTimeMillis() / 1000;
+        long sTime = eTime - 60 * 60 * 24 * 5;
+        int step = (int) ((eTime - sTime) / 100);
+        String popUrl = "https://grafana.tipsy.coffee/api/datasources/proxy/1/api/v1/query_range?query=" +
+                (true ? "max(popcat)" : "sum(rate(popcat%5B5m%5D))") +
+                "%20by%20(region)&start=" + sTime + "&end=" + eTime + "&step=" + step;
+        String result = getDataFromUrl(popUrl);
+        System.out.println(popUrl);
+        System.out.println(result.getBytes(StandardCharsets.UTF_8).length / 1000f / 1000f + "MB");
         if (result == null) return;
-        int times = 1000;
-        long startTime;
 
-        for (int i = 0; i < times; i++) {
+        for (int i = 0; i < 10000; i++) {
             String a = "abc";
             for (int j = 0; j < 1000; j++) {
                 a += "abc";
             }
         }
 
+        int avgTimes = 10;
+        int times = 100;
+        long startTime;
+        long endTime;
 
-        startTime = System.nanoTime();
-        for (int i = 0; i < times; i++) {
-            JsonArray price = new JsonObject(result).getArray("message");
-            for (Object j : price) {
-                JsonArray arr = (JsonArray) j;
-                assertNotNull(arr.getString(0));
-                assertNotNull(arr.getDouble(1));
-            }
-        }
-        System.out.println((double) ((System.nanoTime() - startTime) / times) / 1000000d);
+        long tinyJsonTime = 0;
+        long orgJsonTime = 0;
 
-        startTime = System.nanoTime();
-        for (int i = 0; i < times; i++) {
-            JSONArray price = new JSONObject(result).getJSONArray("message");
-            for (Object j : price) {
-                JSONArray arr = (JSONArray) j;
-                assertNotNull(arr.getString(0));
-                assertNotNull(arr.getDouble(1));
+        System.out.println("loop " + times + " times");
+        System.out.println("avg " + avgTimes + " times");
+        for (int k = 0; k < avgTimes; k++) {
+            startTime = System.nanoTime();
+            for (int i = 0; i < times; i++) {
+                JSONObject data = new JSONObject(result).getJSONObject("data");
+                JSONArray value = data.getJSONArray("result");
+                for (Object j : value) {
+                    JSONObject info = (JSONObject) j;
+                    assertTrue(info.has("metric"));
+                    assertTrue(info.has("values"));
+                }
             }
+            endTime = System.nanoTime();
+            orgJsonTime += ((endTime - startTime) / times);
+            System.out.println("OrgJson: " + (double) ((endTime - startTime) / times) / 1000000d + "ms");
         }
-        System.out.println((double) ((System.nanoTime() - startTime) / times) / 1000000d);
+        System.out.println("OrgJson avg: " + (double) (orgJsonTime / avgTimes) / 1000000d + "ms");
+
+        for (int k = 0; k < avgTimes; k++) {
+            startTime = System.nanoTime();
+            for (int i = 0; i < times; i++) {
+                JsonObject data = new JsonObject(result).getJson("data");
+                JsonArray value = data.getArray("result");
+                for (Object j : value) {
+                    JsonObject info = (JsonObject) j;
+                    assertTrue(info.containsKey("metric"));
+                    assertTrue(info.containsKey("values"));
+                }
+            }
+            endTime = System.nanoTime();
+            tinyJsonTime += ((endTime - startTime) / times);
+            System.out.println("TinyJson: " + (double) ((endTime - startTime) / times) / 1000000d + "ms");
+        }
+        System.out.println("TinyJson avg: " + (double) (tinyJsonTime / avgTimes) / 1000000d + "ms");
     }
 
-
-    //        String result = getDataFromUrl("https://data.ecochia.io/api/explorer/price/?days=" + 1);
-//        if (result == null) return;
-//
-//        JsonObject response = new JsonObject(result);
-////        System.out.println(response.toStringBeauty());
-//        JsonArray netSpaceData = response.get("message");
-//        System.out.println(netSpaceData.toStringBeauty());
     public static String getDataFromUrl(String urlString) {
         try {
             //connection api

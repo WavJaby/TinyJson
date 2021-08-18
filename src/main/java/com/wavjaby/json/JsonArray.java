@@ -9,94 +9,30 @@ public class JsonArray extends ArrayValueGetter implements Serializable, Iterabl
     private Object[] items = new Object[arraySize];
     public int length = 0;
 
-    int EndPos;
-
     public JsonArray(String input) {
-        if (input.length() == 0)
-            return;
-        int i = 0;
-        while (input.charAt(i) != '{' && input.charAt(i) != '[') {
-            i++;
-            if (i >= input.length())
-                throw new JsonException("JsonArray must start with '['");
-        }
-        if (input.charAt(i) == '{') {
-            throw new JsonException("JsonArray must start with '['");
-        }
-        i++;
+        this(new JsonObjectReader(input));
+    }
 
-        boolean moreValue = true;
-        for (; i < input.length(); i++) {
-            char thisChar = input.charAt(i);
-
-            //skip char
-            if (thisChar <= ' ') {
-                continue;
-            }
-
-            //find value start
-            if (!moreValue && thisChar == ',') {
-                moreValue = true;
-                continue;
-            }
-
-            //find string
-            if (moreValue && thisChar == '"') {
-                i++;
-                int start = i;
-                while (input.charAt(i) != '"' || (input.charAt(i - 1) == '\\' && input.charAt(i) == '"')) {
-                    i++;
-                    if (i == input.length()) {
-                        throw new JsonException("String must end with '\"'");
-                    }
-                }
-                String value = input.substring(start, i);
-                add(value);
-                moreValue = false;
-                continue;
-            }
-
-            //is JsonObject
-            if (moreValue && thisChar == '{') {
-                JsonObject jsonObject = new JsonObject(input.substring(i));
-                add(jsonObject);
-                i += jsonObject.EndPos;
-                moreValue = false;
-                continue;
-            }
-
-            //is JsonArray
-            if (moreValue && thisChar == '[') {
-                JsonArray jsonArray = new JsonArray(input.substring(i));
-                add(jsonArray);
-                i += jsonArray.EndPos;
-                moreValue = false;
-                continue;
-            }
-
-            //is other value
-            if (moreValue) {
-                int valueEnd = i;
-                boolean isInt = true;
-                char nextChar;
-                while ((nextChar = input.charAt(valueEnd++)) != ',' && nextChar != ']') {
-                    //not int
-                    if (nextChar == '.' || nextChar == 'e' || nextChar == 'E')
-                        isInt = false;
-                    if (valueEnd == input.length())
-                        throw new JsonException("JsonArray must end with ']'");
-                }
-                if (valueEnd - i > 1) {
-                    String value = input.substring(i, valueEnd - 1);
-                    add(toNumber(value, isInt));
-                    moreValue = false;
-                } else if (length > 0)
-                    throw new JsonException("JsonArray[" + length + "] missing value");
-            }
-
-            if (thisChar == ']') {
-                EndPos = i;
+    public JsonArray(JsonObjectReader reader) {
+        reader.findArrayStart();
+        char nextChar;
+        while ((nextChar = reader.nextChar()) != '\0') {
+            if (nextChar == ',')
+                nextChar = reader.nextChar();
+            if (nextChar == ']')
                 return;
+            switch (nextChar) {
+                case '"':
+                    add(reader.readString());
+                    break;
+                case '[':
+                    add(new JsonArray(reader));
+                    break;
+                case '{':
+                    add(new JsonObject(reader));
+                    break;
+                default:
+                    add(reader.readValue());
             }
         }
         throw new JsonException("JsonArray must end with ']'");
@@ -182,61 +118,112 @@ public class JsonArray extends ArrayValueGetter implements Serializable, Iterabl
      */
     @Override
     public String toString() {
-        return toString(-1);
-    }
-
-    public String toStringBeauty() {
-        return toString(1);
-    }
-
-    public String toString(int index) {
-        String tabLen = "";
         StringBuilder builder = new StringBuilder();
-        if (index < 0) {
-            builder.append("[");
-            --index;
-        } else {
-            byte[] spaceLen = new byte[index * 2];
-
-            for (int i = 0; i < index * 2; ++i) {
-                spaceLen[i] = (byte) (spaceLen[i] + 32);
-            }
-
-            tabLen = new String(spaceLen);
-            if (this.length > 0)
-                builder.append("[\n");
-            else
-                builder.append("[");
-        }
-
+        builder.append('[');
         for (int i = 0; i < length; ++i) {
             Object item = items[i];
-            if (item == null) {
-                builder.append(tabLen).append("null");
-            } else if (item.getClass() == JsonObject.class) {
-                builder.append(tabLen).append(((JsonObject) item).toString(index + 1));
-            } else if (item.getClass() == JsonArray.class) {
-                builder.append(tabLen).append(((JsonArray) item).toString(index + 1));
-            } else if (item.getClass() == String.class) {
-                builder.append(tabLen).append("\"").append(item).append("\"");
-            } else {
-                builder.append(tabLen).append(item);
-            }
+            if (item == null)
+                builder.append("null");
+            else if (item instanceof String)
+                builder.append('\"').append(item).append('\"');
+            else
+                builder.append(item);
 
             if (i < length - 1)
                 builder.append(",");
-            //beautiful
-            if (index > 0)
-                builder.append("\n");
         }
-
-        if (index > 0) {
-            builder.append(tabLen.substring(2));
-        }
-
-        builder.append("]");
+        builder.append(']');
         return builder.toString();
     }
+
+    public String toStringBeauty() {
+        return toString(1, null);
+    }
+
+    String toString(int index, char[] lastTab) {
+        StringBuilder builder = new StringBuilder();
+        char[] tab = new char[index * 2];
+        for (int i = 0; i < index * 2; i++) {
+            tab[i] = ' ';
+        }
+        builder.append('[');
+        if (length > 0)
+            builder.append('\n');
+
+        for (int i = 0; i < length; ++i) {
+            Object item = items[i];
+            if (item == null)
+                builder.append(tab).append("null");
+            else if (item instanceof JsonObject)
+                builder.append(tab).append(((JsonObject) item).toString(index + 1, tab));
+            else if (item instanceof JsonArray)
+                builder.append(tab).append(((JsonArray) item).toString(index + 1, tab));
+            else if (item instanceof String)
+                builder.append(tab).append('\"').append(item).append('\"');
+            else
+                builder.append(tab).append(item);
+
+
+            if (i < length - 1)
+                builder.append(",");
+            builder.append("\n");
+        }
+
+        if (lastTab != null && length > 0)
+            builder.append(lastTab);
+        builder.append("]");
+
+        return builder.toString();
+    }
+
+//    public String toString(int index) {
+//        String tabLen = "";
+//        StringBuilder builder = new StringBuilder();
+//        if (index < 0) {
+//            builder.append("[");
+//            --index;
+//        } else {
+//            byte[] spaceLen = new byte[index * 2];
+//
+//            for (int i = 0; i < index * 2; ++i) {
+//                spaceLen[i] = (byte) (spaceLen[i] + 32);
+//            }
+//
+//            tabLen = new String(spaceLen);
+//            if (this.length > 0) {
+//                builder.append("[\n");
+//            } else
+//                builder.append("[");
+//        }
+//
+//        for (int i = 0; i < length; ++i) {
+//            Object item = items[i];
+//            if (item == null) {
+//                builder.append(tabLen).append("null");
+//            } else if (item instanceof NewJsonObject) {
+//                builder.append(tabLen).append(((NewJsonObject) item).toString(index + 1));
+//            } else if (item instanceof JsonArray) {
+//                builder.append(tabLen).append(((JsonArray) item).toString(index + 1));
+//            } else if (item instanceof String) {
+//                builder.append(tabLen).append("\"").append(item).append("\"");
+//            } else {
+//                builder.append(tabLen).append(item);
+//            }
+//
+//            if (i < length - 1)
+//                builder.append(",");
+//            //beautiful
+//            if (index > 0)
+//                builder.append("\n");
+//        }
+//
+//        if (index > 0) {
+//            builder.append(tabLen.substring(2));
+//        }
+//
+//        builder.append("]");
+//        return builder.toString();
+//    }
 
     /**
      * use in foreach
@@ -246,3 +233,4 @@ public class JsonArray extends ArrayValueGetter implements Serializable, Iterabl
         return Arrays.asList(toArray()).iterator();
     }
 }
+
