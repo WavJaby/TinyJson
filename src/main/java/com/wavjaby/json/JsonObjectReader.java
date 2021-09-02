@@ -54,7 +54,7 @@ class JsonObjectReader extends NumberParser {
     }
 
     private boolean isInt() {
-        return input[i] >= '0' && input[i] <= '9' || input[i] == '-';
+        return input[i] >= '0' && input[i] <= '9' || input[i] == '-' || input[i] == '+';
     }
 
     private boolean isFloat() {

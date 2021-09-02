@@ -3,17 +3,21 @@ package com.wavjaby.json;
 import java.io.Serializable;
 
 public class JsonObject extends JsonValueGetter implements Serializable {
-    private final int arraySize = 10;
-    private Item[] items = new Item[arraySize];
-    public int length = 0;
+    private Item[] items = new Item[10];
+    public int length;
     JsonArray isJsonArray = null;
 
+    @SuppressWarnings("unused")
+    public JsonObject() {
+        length = 0;
+    }
 
     public JsonObject(String input) {
         this(new JsonObjectReader(input));
     }
 
     public JsonObject(JsonObjectReader reader) {
+        length = 0;
         reader.findJsonStart();
         if (reader.thisChar() == '[') {
             isJsonArray = new JsonArray(reader);

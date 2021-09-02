@@ -1,6 +1,8 @@
 package com.wavjaby.json;
 
-public abstract class ArrayValueGetter extends NumberParser{
+import java.math.BigInteger;
+
+public abstract class ArrayValueGetter {
     abstract Object getObject(int index);
 
     @SuppressWarnings("unused")
@@ -23,7 +25,7 @@ public abstract class ArrayValueGetter extends NumberParser{
         try {
             return Integer.parseInt(obj.toString());
         } catch (Exception e) {
-            throw wrongValueFormatException(index, "int",e);
+            throw wrongValueFormatException(index, "int", e);
         }
     }
 
@@ -37,7 +39,21 @@ public abstract class ArrayValueGetter extends NumberParser{
         try {
             return Long.parseLong(obj.toString());
         } catch (Exception e) {
-            throw wrongValueFormatException(index, "long",e);
+            throw wrongValueFormatException(index, "long", e);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public BigInteger getBigInteger(int index) {
+        Object obj = getObject(index);
+        if (obj instanceof BigInteger)
+            return (BigInteger) obj;
+        if (obj instanceof Number)
+            return BigInteger.valueOf(((Number) obj).longValue());
+        try {
+            return new BigInteger(obj.toString());
+        } catch (Exception e) {
+            throw wrongValueFormatException(index, "BigInteger", e);
         }
     }
 
@@ -51,7 +67,7 @@ public abstract class ArrayValueGetter extends NumberParser{
         try {
             return Float.parseFloat(obj.toString());
         } catch (Exception e) {
-            throw wrongValueFormatException(index, "float",e);
+            throw wrongValueFormatException(index, "float", e);
         }
     }
 
@@ -65,7 +81,7 @@ public abstract class ArrayValueGetter extends NumberParser{
         try {
             return Double.parseDouble(obj.toString());
         } catch (Exception e) {
-            throw wrongValueFormatException(index, "double",e);
+            throw wrongValueFormatException(index, "double", e);
         }
     }
 
@@ -102,7 +118,7 @@ public abstract class ArrayValueGetter extends NumberParser{
         throw wrongValueFormatException(index, "JsonArray");
     }
 
-    @SuppressWarnings({"unused","unchecked"})
+    @SuppressWarnings({"unused", "unchecked"})
     public <T> T get(int index) {
         return (T) getObject(index);
     }

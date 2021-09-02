@@ -5,15 +5,20 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 public class JsonArray extends ArrayValueGetter implements Serializable, Iterable<Object> {
-    private final int arraySize = 10;
-    private Object[] items = new Object[arraySize];
-    public int length = 0;
+    private Object[] items = new Object[10];
+    public int length;
+
+    @SuppressWarnings("unused")
+    public JsonArray() {
+        length = 0;
+    }
 
     public JsonArray(String input) {
         this(new JsonObjectReader(input));
     }
 
     public JsonArray(JsonObjectReader reader) {
+        length = 0;
         reader.findArrayStart();
         char nextChar;
         while ((nextChar = reader.nextChar()) != '\0') {
@@ -175,55 +180,6 @@ public class JsonArray extends ArrayValueGetter implements Serializable, Iterabl
 
         return builder.toString();
     }
-
-//    public String toString(int index) {
-//        String tabLen = "";
-//        StringBuilder builder = new StringBuilder();
-//        if (index < 0) {
-//            builder.append("[");
-//            --index;
-//        } else {
-//            byte[] spaceLen = new byte[index * 2];
-//
-//            for (int i = 0; i < index * 2; ++i) {
-//                spaceLen[i] = (byte) (spaceLen[i] + 32);
-//            }
-//
-//            tabLen = new String(spaceLen);
-//            if (this.length > 0) {
-//                builder.append("[\n");
-//            } else
-//                builder.append("[");
-//        }
-//
-//        for (int i = 0; i < length; ++i) {
-//            Object item = items[i];
-//            if (item == null) {
-//                builder.append(tabLen).append("null");
-//            } else if (item instanceof NewJsonObject) {
-//                builder.append(tabLen).append(((NewJsonObject) item).toString(index + 1));
-//            } else if (item instanceof JsonArray) {
-//                builder.append(tabLen).append(((JsonArray) item).toString(index + 1));
-//            } else if (item instanceof String) {
-//                builder.append(tabLen).append("\"").append(item).append("\"");
-//            } else {
-//                builder.append(tabLen).append(item);
-//            }
-//
-//            if (i < length - 1)
-//                builder.append(",");
-//            //beautiful
-//            if (index > 0)
-//                builder.append("\n");
-//        }
-//
-//        if (index > 0) {
-//            builder.append(tabLen.substring(2));
-//        }
-//
-//        builder.append("]");
-//        return builder.toString();
-//    }
 
     /**
      * use in foreach

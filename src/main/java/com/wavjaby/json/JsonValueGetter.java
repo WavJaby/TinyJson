@@ -1,6 +1,8 @@
 package com.wavjaby.json;
 
-public abstract class JsonValueGetter extends NumberParser {
+import java.math.BigInteger;
+
+public abstract class JsonValueGetter {
     abstract Object getObject(String key);
 
     @SuppressWarnings("unused")
@@ -23,7 +25,7 @@ public abstract class JsonValueGetter extends NumberParser {
         try {
             return Integer.parseInt(obj.toString());
         } catch (Exception e) {
-            throw wrongValueFormatException(key, "int",e);
+            throw wrongValueFormatException(key, "int", e);
         }
     }
 
@@ -37,9 +39,24 @@ public abstract class JsonValueGetter extends NumberParser {
         try {
             return Long.parseLong(obj.toString());
         } catch (Exception e) {
-            throw wrongValueFormatException(key, "long",e);
+            throw wrongValueFormatException(key, "long", e);
         }
     }
+
+    @SuppressWarnings("unused")
+    public BigInteger getBigInteger(String key) {
+        Object obj = getObject(key);
+        if (obj instanceof BigInteger)
+            return (BigInteger) obj;
+        if (obj instanceof Number)
+            return BigInteger.valueOf(((Number) obj).longValue());
+        try {
+            return new BigInteger(obj.toString());
+        } catch (Exception e) {
+            throw wrongValueFormatException(key, "BigInteger", e);
+        }
+    }
+
 
     @SuppressWarnings("unused")
     public float getFloat(String key) {
@@ -51,7 +68,7 @@ public abstract class JsonValueGetter extends NumberParser {
         try {
             return Float.parseFloat(obj.toString());
         } catch (Exception e) {
-            throw wrongValueFormatException(key, "float",e);
+            throw wrongValueFormatException(key, "float", e);
         }
     }
 
@@ -65,7 +82,7 @@ public abstract class JsonValueGetter extends NumberParser {
         try {
             return Double.parseDouble(obj.toString());
         } catch (Exception e) {
-            throw wrongValueFormatException(key, "double",e);
+            throw wrongValueFormatException(key, "double", e);
         }
     }
 
@@ -102,7 +119,7 @@ public abstract class JsonValueGetter extends NumberParser {
         throw wrongValueFormatException(key, "JsonArray");
     }
 
-    @SuppressWarnings({"unused","unchecked"})
+    @SuppressWarnings({"unused", "unchecked"})
     public <T> T get(String key) {
         return (T) getObject(key);
     }

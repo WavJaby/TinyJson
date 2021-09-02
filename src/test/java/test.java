@@ -50,6 +50,14 @@ public class test {
     }
 
     @Test
+    public void bigIntegerTest() {
+        String input = "{\"id\":\"BlockchainSummary\",\"netspace\":39700684056485050000,\"difficulty\":2768,\"uniqueCoins\":1605728,\"supply\":22605728000000000000,\"addressCount\":6372031,\"price\":221.15,\"averageFees\":2.99477e-7,\"power\":53075}";
+        JsonObject json = new JsonObject(input);
+        assertEquals(json.getBigInteger("netspace").toString(), "39700684056485050000");
+        assertEquals(json.getBigInteger("difficulty").toString(), "2768");
+    }
+
+    @Test
     public void speedTest() {
         long eTime = System.currentTimeMillis() / 1000;
         long sTime = eTime - 60 * 60 * 24 * 5;
