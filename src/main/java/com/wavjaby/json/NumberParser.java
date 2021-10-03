@@ -15,9 +15,10 @@ public class NumberParser {
                     //biginteger
                     if (value.length() > 17) {
                         BigInteger valBig = new BigInteger(value);
+                        //big
                         if (valBig.compareTo(bigLongMax) > 0 || valBig.compareTo(bigLongMin) < 0)
                             return valBig;
-                        else
+                        else //long
                             return valBig.longValueExact();
                     } else {
                         long valLong = Long.parseLong(value);
@@ -28,29 +29,27 @@ public class NumberParser {
                             return (int) valLong;
                     }
                 }
-                //是int
-                else {
+                //int
+                else
                     return Integer.parseInt(value);
-                }
             }
-            //是浮點數
+            //float
             else if (isFloat) {
                 double valDouble = Double.parseDouble(value);
-                //是double
-                if (valDouble > Integer.MAX_VALUE || valDouble < Integer.MIN_VALUE) {
+                //double
+                if (valDouble > Integer.MAX_VALUE || valDouble < Integer.MIN_VALUE)
                     return valDouble;
-                } else {
+                else
                     return (float) valDouble;
-                }
             }
-            //是布林值
-            else if (value.equalsIgnoreCase("true")) {
+            //boolean
+            else if (value.equalsIgnoreCase("true"))
                 return true;
-            } else if (value.equalsIgnoreCase("false")) {
+            else if (value.equalsIgnoreCase("false"))
                 return false;
-            } else if (value.equalsIgnoreCase("null")) {
+            else if (value.equalsIgnoreCase("null")) //null
                 return null;
-            }
+
         throw new JsonException("value wrong at index: " + index);
     }
 }

@@ -8,6 +8,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 
@@ -59,21 +61,29 @@ public class test {
 
     @Test
     public void speedTest() {
-        long eTime = System.currentTimeMillis() / 1000;
-        long sTime = eTime - 60 * 60 * 24 * 5;
-        int step = (int) ((eTime - sTime) / 100);
-        String popUrl = "https://grafana.tipsy.coffee/api/datasources/proxy/1/api/v1/query_range?query=" +
-                (true ? "max(popcat)" : "sum(rate(popcat%5B5m%5D))") +
-                "%20by%20(region)&start=" + sTime + "&end=" + eTime + "&step=" + step;
-        String result = getDataFromUrl(popUrl);
-        System.out.println(popUrl);
-        System.out.println(result.getBytes(StandardCharsets.UTF_8).length / 1000f / 1000f + "MB");
-        if (result == null) return;
+//        long eTime = System.currentTimeMillis() / 1000;
+//        long sTime = eTime - 60 * 60 * 24 * 5;
+//        int step = (int) ((eTime - sTime) / 100);
+//        String popUrl = "https://grafana.tipsy.coffee/api/datasources/proxy/1/api/v1/query_range?query=" +
+//                (true ? "max(popcat)" : "sum(rate(popcat%5B5m%5D))") +
+//                "%20by%20(region)&start=" + sTime + "&end=" + eTime + "&step=" + step;
+//        String result = getDataFromUrl(popUrl);
+//        System.out.println(popUrl);
+//        System.out.println(result.getBytes(StandardCharsets.UTF_8).length / 1000f / 1000f + "MB");
+//        if (result == null) return;
+
+        String result = null;
+        try {
+            result = new String(Files.readAllBytes(Paths.get("src\\test\\JsonText.json")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
         for (int i = 0; i < 10000; i++) {
             String a = "abc";
             for (int j = 0; j < 1000; j++) {
-                a += "abc";
+                a += "abcd";
             }
         }
 
@@ -90,13 +100,14 @@ public class test {
         for (int k = 0; k < avgTimes; k++) {
             startTime = System.nanoTime();
             for (int i = 0; i < times; i++) {
-                JSONObject data = new JSONObject(result).getJSONObject("data");
-                JSONArray value = data.getJSONArray("result");
-                for (Object j : value) {
-                    JSONObject info = (JSONObject) j;
-                    assertTrue(info.has("metric"));
-                    assertTrue(info.has("values"));
-                }
+                JSONArray data = new JSONArray(result);
+//                JSONObject data = new JSONObject(result).getJSONObject("data");
+//                JSONArray value = data.getJSONArray("result");
+//                for (Object j : value) {
+//                    JSONObject info = (JSONObject) j;
+//                    assertTrue(info.has("metric"));
+//                    assertTrue(info.has("values"));
+//                }
             }
             endTime = System.nanoTime();
             orgJsonTime += ((endTime - startTime) / times);
@@ -107,13 +118,14 @@ public class test {
         for (int k = 0; k < avgTimes; k++) {
             startTime = System.nanoTime();
             for (int i = 0; i < times; i++) {
-                JsonObject data = new JsonObject(result).getJson("data");
-                JsonArray value = data.getArray("result");
-                for (Object j : value) {
-                    JsonObject info = (JsonObject) j;
-                    assertTrue(info.containsKey("metric"));
-                    assertTrue(info.containsKey("values"));
-                }
+                JsonObject data = new JsonObject(result);
+//                JsonObject data = new JsonObject(result).getJson("data");
+//                JsonArray value = data.getArray("result");
+//                for (Object j : value) {
+//                    JsonObject info = (JsonObject) j;
+//                    assertTrue(info.containsKey("metric"));
+//                    assertTrue(info.containsKey("values"));
+//                }
             }
             endTime = System.nanoTime();
             tinyJsonTime += ((endTime - startTime) / times);

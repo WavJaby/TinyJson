@@ -20,7 +20,7 @@ task sourcesJar(type: Jar) {
     archiveClassifier = "sources"
 }
 
-tasks.named('jar') {
+jar {
     manifest {
         attributes('Implementation-Title': project.name,
                 'Implementation-Version': project.version)
