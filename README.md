@@ -14,7 +14,7 @@ It's small and faster than org.json\
 Lets get started!
 1. [Usage](#Usage)
 2. [Download](#Download)
-3. [All Methods](#All Methods)
+3. [Methods](#Methods)
 
 ## Usage
 ### JsonObject
@@ -84,7 +84,7 @@ repositories {
 }
 ```
 
-## All Methods
+## Methods
 ### JsonObject
 - `toString()` get json string
 - `toStringBeauty()` get the json string, but it has line breaks and tabs
