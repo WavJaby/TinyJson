@@ -1,5 +1,6 @@
 import com.wavjaby.json.JsonArray;
 import com.wavjaby.json.JsonObject;
+import com.wavjaby.json.list.ListedJsonObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -10,6 +11,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 import static org.junit.Assert.*;
 
@@ -17,11 +19,15 @@ public class test {
 
     @Test
     public void emptyTest() {
-        JsonObject jsonObjectButArray = new JsonObject("[]");
+        ListedJsonObject listedJsonObjectButArray = new ListedJsonObject("[]");
+        ListedJsonObject listedJsonObject = new ListedJsonObject("{}");
         JsonObject jsonObject = new JsonObject("{}");
 
-        assertTrue(jsonObjectButArray.isJsonArray());
-        assertFalse(jsonObject.isJsonArray());
+        assertTrue(listedJsonObjectButArray.isJsonArray());
+        assertFalse(listedJsonObject.isJsonArray());
+        assertEquals("[]", listedJsonObjectButArray.toString());
+        assertEquals("{}", listedJsonObject.toString());
+        assertEquals("{}", jsonObject.toString());
     }
 
     @Test
@@ -39,16 +45,66 @@ public class test {
         String input = "{\"a\":\"abc\"}";
         JsonObject jsonObject = new JsonObject(input);
         assertEquals(input, jsonObject.toString());
-        input = "{\"a\":{\"a\":\"abc\",\"b\":[123,\"456\"]}}";
+        input = "{\"a\":{\"a\":\"abc\",\"b\":[123,\"456\",{\"a\":1}]}}";
         jsonObject = new JsonObject(input);
+        assertEquals("abc", jsonObject.get("a").getString("a"));
         assertEquals(input, jsonObject.toString());
+        System.out.println(jsonObject.toStringBeauty());
     }
 
     @Test
     public void jsonArrayValueTest() {
         JsonArray jsonArray = new JsonArray("[[1,2,3],[4,5,6]]");
-        assertEquals(1, (int) jsonArray.getArray(0).get(0));
         assertEquals(1, jsonArray.getArray(0).getInt(0));
+    }
+
+    @Test
+    public void jsonArrayRemoveTest() {
+        JsonArray jsonArray = new JsonArray("[1,2,3,4,5,6,7]");
+        jsonArray.remove(0);
+        assertEquals("[2,3,4,5,6,7]", jsonArray.toString());
+        jsonArray.remove(1);
+        assertEquals("[2,4,5,6,7]", jsonArray.toString());
+        jsonArray.remove(4);
+        assertEquals("[2,4,5,6]", jsonArray.toString());
+        new ArrayList<>();
+        JsonArray jsonArray1 = new JsonArray();
+//        Field field;
+//        try {
+//            field = JsonArray.class.getDeclaredField("items");
+//            field.setAccessible(true);
+//        } catch (NoSuchFieldException e) {
+//            throw new RuntimeException(e);
+//        }
+
+        for (int c = 0; c < 10; c++) {
+//            int last = 0;
+            for (int i = 0; i < 100000; i++) {
+//            try {
+//                Object[] o = (Object[]) field.get(jsonArray1);
+//                if(last != o.length)
+//                    System.out.println(last = o.length);
+//            } catch (IllegalAccessException e) {
+//                throw new RuntimeException(e);
+//            }
+                jsonArray1.add(i);
+            }
+//        System.out.println(jsonArray1.toString());
+            long start = System.currentTimeMillis();
+            for (; jsonArray1.length > 0; ) {
+//            try {
+//                Object[] o = (Object[]) field.get(jsonArray1);
+//                if(last != o.length)
+//                    System.out.println(last = o.length);
+//            } catch (IllegalAccessException e) {
+//                throw new RuntimeException(e);
+//            }
+                jsonArray1.indexOf((int) (jsonArray1.length / 2));
+                jsonArray1.remove(0);
+            }
+//        System.out.println(jsonArray1.toString());
+            System.out.println(System.currentTimeMillis() - start);
+        }
     }
 
     @Test
@@ -57,10 +113,11 @@ public class test {
         JsonObject json = new JsonObject(input);
         assertEquals(json.getBigInteger("netspace").toString(), "39700684056485050000");
         assertEquals(json.getBigInteger("difficulty").toString(), "2768");
+//        System.out.println(json.getFloat("averageFees"));
     }
 
     @Test
-    public void speedTest() {
+    public void speedTest() throws InterruptedException {
 //        long eTime = System.currentTimeMillis() / 1000;
 //        long sTime = eTime - 60 * 60 * 24 * 5;
 //        int step = (int) ((eTime - sTime) / 100);
@@ -79,59 +136,51 @@ public class test {
             e.printStackTrace();
         }
 
-
-        for (int i = 0; i < 10000; i++) {
-            String a = "abc";
-            for (int j = 0; j < 1000; j++) {
-                a += "abcd";
-            }
-        }
-
         int avgTimes = 10;
-        int times = 100;
+        int times = 10;
         long startTime;
         long endTime;
 
         long tinyJsonTime = 0;
         long orgJsonTime = 0;
 
+        System.out.println(result.getBytes(StandardCharsets.UTF_8).length / 1000f / 1000f + "MB");
         System.out.println("loop " + times + " times");
         System.out.println("avg " + avgTimes + " times");
-        for (int k = 0; k < avgTimes; k++) {
-            startTime = System.nanoTime();
-            for (int i = 0; i < times; i++) {
-                JSONArray data = new JSONArray(result);
-//                JSONObject data = new JSONObject(result).getJSONObject("data");
-//                JSONArray value = data.getJSONArray("result");
-//                for (Object j : value) {
-//                    JSONObject info = (JSONObject) j;
-//                    assertTrue(info.has("metric"));
-//                    assertTrue(info.has("values"));
-//                }
-            }
-            endTime = System.nanoTime();
-            orgJsonTime += ((endTime - startTime) / times);
-            System.out.println("OrgJson: " + (double) ((endTime - startTime) / times) / 1000000d + "ms");
-        }
-        System.out.println("OrgJson avg: " + (double) (orgJsonTime / avgTimes) / 1000000d + "ms");
+
+        Thread.sleep(5000);
 
         for (int k = 0; k < avgTimes; k++) {
             startTime = System.nanoTime();
             for (int i = 0; i < times; i++) {
-                JsonObject data = new JsonObject(result);
-//                JsonObject data = new JsonObject(result).getJson("data");
-//                JsonArray value = data.getArray("result");
-//                for (Object j : value) {
-//                    JsonObject info = (JsonObject) j;
-//                    assertTrue(info.containsKey("metric"));
-//                    assertTrue(info.containsKey("values"));
-//                }
+                JsonArray data = new JsonArray(result);
+                for (Object j : data) {
+                    JsonObject info = (JsonObject) j;
+                    assertTrue(info.containsKey("about"));
+                    assertTrue(info.containsKey("_id"));
+                }
             }
             endTime = System.nanoTime();
             tinyJsonTime += ((endTime - startTime) / times);
             System.out.println("TinyJson: " + (double) ((endTime - startTime) / times) / 1000000d + "ms");
         }
         System.out.println("TinyJson avg: " + (double) (tinyJsonTime / avgTimes) / 1000000d + "ms");
+
+        for (int k = 0; k < avgTimes; k++) {
+            startTime = System.nanoTime();
+            for (int i = 0; i < times; i++) {
+                JSONArray data = new JSONArray(result);
+                for (Object j : data) {
+                    JSONObject info = (JSONObject) j;
+                    assertTrue(info.has("about"));
+                    assertTrue(info.has("_id"));
+                }
+            }
+            endTime = System.nanoTime();
+            orgJsonTime += ((endTime - startTime) / times);
+            System.out.println("OrgJson: " + (double) ((endTime - startTime) / times) / 1000000d + "ms");
+        }
+        System.out.println("OrgJson avg: " + (double) (orgJsonTime / avgTimes) / 1000000d + "ms");
     }
 
     @Test
@@ -140,7 +189,8 @@ public class test {
         String url = "https://youtubei.googleapis.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
         String payload = "{\"videoId\":\"" + "hw1b6fnWYc4" + "\",\"context\":{\"client\":{\"hl\":\"zh\",\"gl\":\"TW\",\"clientName\":\"WEB\",\"clientVersion\":\"2.20210330.08.00\"}}}";
         String result = getUrl(url, payload);
-        new JsonObject(result);
+        System.out.println(new JsonObject(result).toStringBeauty());
+        System.out.println(new ListedJsonObject(result).toStringBeauty());
     }
 
     public static String getDataFromUrl(String urlString) {

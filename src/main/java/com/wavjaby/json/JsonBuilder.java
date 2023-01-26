@@ -1,78 +1,111 @@
 package com.wavjaby.json;
 
+import com.wavjaby.json.list.ListedJsonObject;
+
 public class JsonBuilder {
-    StringBuilder builder = new StringBuilder();
-    boolean firstValue = true;
+    final StringBuilder builder = new StringBuilder();
 
-    public JsonBuilder() {
-        builder.append('{');
-    }
-
-    public JsonBuilder append(String key, String value) {
-        if (!firstValue)
-            builder.append(',');
-        else
-            firstValue = false;
-        builder.append('"').append(key).append("\":\"").append(value).append('"');
+    public JsonBuilder append(String key, StringBuilder value) {
+        builder.append(',').append('"').append(key).append('"').append(':').append('"').append(value).append('"');
         return this;
     }
 
-    public JsonBuilder append(String key, String value, boolean isJson) {
-        if (!firstValue)
-            builder.append(',');
+    public JsonBuilder append(String key, String value) {
+        if (value == null)
+            builder.append(',').append('"').append(key).append('"').append(':').append((String) null);
         else
-            firstValue = false;
-        builder.append('"').append(key).append("\":").append(value);
+            builder.append(',').append('"').append(key).append('"').append(':').append('"').append(value).append('"');
+        return this;
+    }
+
+    public JsonBuilder appendRaw(String key, String value) {
+        builder.append(',').append('"').append(key).append('"').append(':').append(value);
         return this;
     }
 
     public JsonBuilder append(String key, long value) {
-        if (!firstValue)
-            builder.append(',');
-        else
-            firstValue = false;
-        builder.append('"').append(key).append("\":").append(value);
+        builder.append(',').append('"').append(key).append('"').append(':').append(value);
         return this;
     }
 
     public JsonBuilder append(String key, int value) {
-        if (!firstValue)
-            builder.append(',');
-        else
-            firstValue = false;
-        builder.append('"').append(key).append("\":").append(value);
+        builder.append(',').append('"').append(key).append('"').append(':').append(value);
+        return this;
+    }
+
+    public JsonBuilder append(String key, double value) {
+        builder.append(',').append('"').append(key).append('"').append(':').append(value);
+        return this;
+    }
+
+    public JsonBuilder append(String key, float value) {
+        builder.append(',').append('"').append(key).append('"').append(':').append(value);
         return this;
     }
 
     public JsonBuilder append(String key, boolean value) {
-        if (!firstValue)
-            builder.append(',');
-        else
-            firstValue = false;
-        builder.append('"').append(key).append("\":").append(value ? "true" : "false");
-        return this;
-    }
-
-    public JsonBuilder append(String key, JsonBuilder jsonBuilder) {
-        if (!firstValue)
-            builder.append(',');
-        else
-            firstValue = false;
-        builder.append('"').append(key).append("\":").append(jsonBuilder.toString());
+        builder.append(',').append('"').append(key).append('"').append(':').append(value);
         return this;
     }
 
     public JsonBuilder append(String key) {
-        if (!firstValue)
-            builder.append(',');
-        else
-            firstValue = false;
-        builder.append('"').append(key).append("\":null");
+        builder.append(',').append('"').append(key).append('"').append(':').append((String) null);
+        return this;
+    }
+
+    public JsonBuilder append(String key, JsonBuilder jsonBuilder) {
+        if (jsonBuilder == null) {
+            builder.append(',').append('"').append(key).append('"').append(':').append((String) null);
+            return this;
+        }
+        if (jsonBuilder.builder.length() > 0) {
+            jsonBuilder.builder.setCharAt(0, '{');
+            builder.append(',').append('"').append(key).append('"').append(':').append(jsonBuilder.builder).append('}');
+        } else
+            builder.append(',').append('"').append(key).append('"').append(':').append('{').append('}');
+        return this;
+    }
+
+    public JsonBuilder append(String key, JsonArrayBuilder jsonArrayBuilder) {
+        if (jsonArrayBuilder == null) {
+            builder.append(',').append('"').append(key).append('"').append(':').append((String) null);
+            return this;
+        }
+        if (jsonArrayBuilder.builder.length() > 0) {
+            jsonArrayBuilder.builder.setCharAt(0, '[');
+            builder.append(',').append('"').append(key).append('"').append(':').append(jsonArrayBuilder.builder).append(']');
+        } else
+            builder.append(',').append('"').append(key).append('"').append(':').append('[').append(']');
+        return this;
+    }
+
+    public JsonBuilder append(String key, ListedJsonObject json) {
+        if (json == null) {
+            builder.append(',').append('"').append(key).append('"').append(':').append((String) null);
+            return this;
+        }
+        builder.append(',').append('"').append(key).append('"').append(':').append(json.toString());
+        return this;
+    }
+
+    public JsonBuilder append(String key, JsonArray jsonArray) {
+        if (jsonArray == null) {
+            builder.append(',').append('"').append(key).append('"').append(':').append((String) null);
+            return this;
+        }
+        builder.append(',').append('"').append(key).append('"').append(':').append(jsonArray.toString());
         return this;
     }
 
     @Override
     public String toString() {
-        return builder.toString() + '}';
+        if (builder.length() > 0) {
+            builder.setCharAt(0, '{');
+            builder.append('}');
+            String out = builder.toString();
+            builder.setLength(builder.length() - 1);
+            return out;
+        } else
+            return "{}";
     }
 }

@@ -29,10 +29,10 @@ JsonObject result = new JsonObject(rawData);
 System.out.println(result.getString("Hello"));
 System.out.println(result.getInt("age"));
 ```
-**Get length**
+**Get ListedJsonObject length**
 ```java
-JsonObject jsonObject = new JsonObject("{\"Hello\":\"World\"}");
-System.out.println(jsonObject.length);
+ListedJsonObject listedJsonObject = new ListedJsonObject("{\"Hello\":\"World\"}");
+System.out.println(listedJsonObject.length);
 ```
 ### JsonArray
 **Creat a JsonArray**
@@ -69,7 +69,7 @@ for (Object i : result) {
 <dependency>
     <groupId>io.github.WavJaby</groupId>
     <artifactId>tiny-json</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
 </dependency>
 ```
 
@@ -77,7 +77,7 @@ for (Object i : result) {
 ```gradle
 dependencies {
     //Change 'implementation' to 'compile' in old Gradle versions
-    implementation 'io.github.WavJaby:tiny-json:0.0.2'
+    implementation 'io.github.WavJaby:tiny-json:0.0.3'
 }
 repositories {
     mavenCentral()

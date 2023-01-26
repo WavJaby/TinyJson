@@ -1,29 +1,27 @@
-package com.wavjaby.json;
+package com.wavjaby.json.list;
 
 import java.io.Serializable;
 
 public class Item implements Serializable {
-    private String key;
-    private Object value;
+    final String key;
+    Object value;
 
     Item(String key, Object value) {
         this.key = key;
         this.value = value;
     }
 
+    @SuppressWarnings("unused")
     public String getKey() {
         return key;
     }
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-
+    @SuppressWarnings("unused")
     public Object getValue() {
         return value;
     }
 
-    public void setValue(Object value) {
+    void setValue(Object value) {
         this.value = value;
     }
 

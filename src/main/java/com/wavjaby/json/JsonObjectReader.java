@@ -1,10 +1,13 @@
 package com.wavjaby.json;
 
-class JsonObjectReader extends NumberParser {
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+public class JsonObjectReader {
     private final char[] input;
     public int i = 0;
 
-    JsonObjectReader(String input) {
+    public JsonObjectReader(String input) {
         this.input = input.toCharArray();
     }
 
@@ -27,9 +30,7 @@ class JsonObjectReader extends NumberParser {
             if (++i == input.length)
                 throw new JsonException("String must start with '\"'");
         }
-        char[] out = new char[i - startIndex];
-        System.arraycopy(input, startIndex, out, 0, i - startIndex);
-        return new String(out);
+        return new String(input, startIndex, i - startIndex);
     }
 
     public Object readValue() {
@@ -39,26 +40,23 @@ class JsonObjectReader extends NumberParser {
         while (i + 1 < input.length) {
             if (input[i] <= ' ' || input[i] == ',' || input[i] == ']' || input[i] == '}')
                 break;
-            if (!isInt()) {
-                if (!isFloat())
+            if (!(input[i] >= '0' && input[i] <= '9' || input[i] == '-' || input[i] == '+')) {
+                if (!(input[i] == '.' || input[i] == 'e' || input[i] == 'E'))
                     isFloat = false;
                 isInt = false;
             }
-
             i++;
         }
-        char[] out = new char[i - startIndex];
-        System.arraycopy(input, startIndex, out, 0, i - startIndex);
-        i--;
-        return toNumber(new String(out), isInt, isFloat, startIndex);
-    }
-
-    private boolean isInt() {
-        return input[i] >= '0' && input[i] <= '9' || input[i] == '-' || input[i] == '+';
-    }
-
-    private boolean isFloat() {
-        return input[i] == '.' || input[i] == 'e' || input[i] == 'E';
+        String value = new String(input, startIndex, i-- - startIndex);
+        //boolean
+        if (value.equalsIgnoreCase("true"))
+            return true;
+        else if (value.equalsIgnoreCase("false"))
+            return false;
+        else if (value.equalsIgnoreCase("null")) //null
+            return null;
+        else
+            return toNumber(value, isInt, isFloat, startIndex);
     }
 
     public void findJsonStart() {
@@ -67,10 +65,9 @@ class JsonObjectReader extends NumberParser {
             throw new JsonException("JsonObject must start with '{'");
         while (input[i] != '{' && input[i] != '[') {
             if (++i == input.length)
-                throw new JsonException("JsonArray must start with '{', at index: " + startIndex);
+                throw new JsonException("JsonObject must start with '{', at index: " + startIndex);
         }
     }
-
 
     public void findArrayStart() {
         int startIndex = i;
@@ -86,5 +83,54 @@ class JsonObjectReader extends NumberParser {
 
     public char thisChar() {
         return input[i];
+    }
+
+    // number parser
+    static Number toNumber(String value, boolean isInt, boolean isFloat, int index) {
+        if (value.length() != 0) {
+            // -0
+            if (value.length() == 2 && value.charAt(0) == '-' && value.charAt(1) == '0')
+                return -0.0D;
+
+            // Digit
+            if (isInt) {
+                // Can be Long
+                if (value.length() > 9) {
+                    // Can be BigInteger
+                    if (value.length() > 18) {
+                        BigInteger valBig = new BigInteger(value, 10);
+                        // Long
+                        if (valBig.bitLength() <= 63)
+                            return valBig.longValue();
+                        else // Big
+                            return valBig;
+                    } else {
+                        long valLong = Long.parseLong(value, 10);
+                        // Long
+                        if (valLong > Integer.MAX_VALUE || valLong < Integer.MIN_VALUE)
+                            return valLong;
+                        else // Int
+                            return (int) valLong;
+                    }
+                }
+                // Int
+                else
+                    return Integer.valueOf(value, 10);
+            }
+            // Float
+            else if (isFloat) {
+                try {
+                    return new BigDecimal(value);
+                } catch (NumberFormatException retryAsDouble) {
+                    // Support hex floats
+                    try {
+                        return Double.parseDouble(value);
+                    } catch (NumberFormatException e) {
+                        throw new JsonException("Invalid number at index: " + index);
+                    }
+                }
+            }
+        }
+        throw new JsonException("Invalid number at index: " + index);
     }
 }

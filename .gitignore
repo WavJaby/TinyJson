@@ -1,3 +1,7 @@
 # Project exclude paths
 /.gradle/
 /out/
+/build/
+/gradle/
+gradle.properties
+/src/test/JsonText.json

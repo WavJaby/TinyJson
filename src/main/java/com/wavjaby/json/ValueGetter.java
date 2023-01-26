@@ -1,12 +1,14 @@
 package com.wavjaby.json;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public abstract class JsonValueGetter {
-    abstract Object getObject(String key);
+public abstract class ValueGetter<T, K> {
+
+    abstract public Object getObject(K key);
 
     @SuppressWarnings("unused")
-    public String getString(String key) {
+    public String getString(K key) {
         Object obj = getObject(key);
         if (obj == null)
             return null;
@@ -16,7 +18,7 @@ public abstract class JsonValueGetter {
     }
 
     @SuppressWarnings("unused")
-    public int getInt(String key) {
+    public int getInt(K key) {
         Object obj = getObject(key);
         if (obj instanceof Integer)
             return (int) obj;
@@ -30,7 +32,7 @@ public abstract class JsonValueGetter {
     }
 
     @SuppressWarnings("unused")
-    public long getLong(String key) {
+    public long getLong(K key) {
         Object obj = getObject(key);
         if (obj instanceof Long)
             return (long) obj;
@@ -44,7 +46,7 @@ public abstract class JsonValueGetter {
     }
 
     @SuppressWarnings("unused")
-    public BigInteger getBigInteger(String key) {
+    public BigInteger getBigInteger(K key) {
         Object obj = getObject(key);
         if (obj instanceof BigInteger)
             return (BigInteger) obj;
@@ -59,7 +61,7 @@ public abstract class JsonValueGetter {
 
 
     @SuppressWarnings("unused")
-    public float getFloat(String key) {
+    public float getFloat(K key) {
         Object obj = getObject(key);
         if (obj instanceof Float)
             return (float) obj;
@@ -73,7 +75,7 @@ public abstract class JsonValueGetter {
     }
 
     @SuppressWarnings("unused")
-    public double getDouble(String key) {
+    public double getDouble(K key) {
         Object obj = getObject(key);
         if (obj instanceof Double)
             return (double) obj;
@@ -87,7 +89,22 @@ public abstract class JsonValueGetter {
     }
 
     @SuppressWarnings("unused")
-    public boolean getBoolean(String key) {
+    public BigDecimal getBigDecimal(K key) {
+        Object obj = getObject(key);
+        if (obj instanceof BigDecimal)
+            return (BigDecimal) obj;
+        if (obj instanceof Number)
+            return BigDecimal.valueOf(((Number) obj).doubleValue());
+        try {
+            return new BigDecimal(obj.toString());
+        } catch (Exception e) {
+            throw wrongValueFormatException(key, "BigDecimal", e);
+        }
+    }
+
+
+    @SuppressWarnings("unused")
+    public boolean getBoolean(K key) {
         Object obj = getObject(key);
         if (obj instanceof Boolean)
             return (boolean) obj;
@@ -100,7 +117,7 @@ public abstract class JsonValueGetter {
     }
 
     @SuppressWarnings("unused")
-    public JsonObject getJson(String key) {
+    public JsonObject getJson(K key) {
         Object obj = getObject(key);
         if (obj == null)
             return null;
@@ -110,7 +127,7 @@ public abstract class JsonValueGetter {
     }
 
     @SuppressWarnings("unused")
-    public JsonArray getArray(String key) {
+    public JsonArray getArray(K key) {
         Object obj = getObject(key);
         if (obj == null)
             return null;
@@ -120,17 +137,15 @@ public abstract class JsonValueGetter {
     }
 
     @SuppressWarnings({"unused", "unchecked"})
-    public <T> T get(String key) {
+    public T get(K key) {
         return (T) getObject(key);
     }
 
-    private static JsonException wrongValueFormatException(String key, String valueType) {
-        return new JsonException(
-                "JsonObject[\"" + key + "\"] is not a " + valueType);
+    private static JsonException wrongValueFormatException(Object key, String valueType) {
+        return new JsonException("Object[\"" + key + "\"] is not a " + valueType);
     }
 
-    private static JsonException wrongValueFormatException(String key, String valueType, Throwable e) {
-        return new JsonException(
-                "JsonObject[\"" + key + "\"] is not a " + valueType, e);
+    private static JsonException wrongValueFormatException(Object key, String valueType, Throwable e) {
+        return new JsonException("Object[\"" + key + "\"] is not a " + valueType, e);
     }
 }

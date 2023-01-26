@@ -60,7 +60,7 @@ publishing {
 //            artifact javadocJar
 
             pom {
-                inceptionYear = '2021'
+                inceptionYear = '2023'
                 name = project.name
                 description = 'A simple json library'
                 url = 'https://github.com/WavJaby/TinyJson'
