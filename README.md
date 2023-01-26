@@ -69,7 +69,7 @@ for (Object i : result) {
 <dependency>
     <groupId>io.github.WavJaby</groupId>
     <artifactId>tiny-json</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
 </dependency>
 ```
 
@@ -77,7 +77,7 @@ for (Object i : result) {
 ```gradle
 dependencies {
     //Change 'implementation' to 'compile' in old Gradle versions
-    implementation 'io.github.WavJaby:tiny-json:0.0.3'
+    implementation 'io.github.WavJaby:tiny-json:0.0.4'
 }
 repositories {
     mavenCentral()
