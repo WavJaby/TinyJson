@@ -86,7 +86,7 @@ public class JsonObject extends ValueGetter<JsonObject, String> implements Seria
 
     //setter
     @SuppressWarnings({"unused"})
-    private JsonObject put(String key, Object value) {
+    public JsonObject put(String key, Object value) {
         map.put(key, value);
         return this;
     }
@@ -132,7 +132,7 @@ public class JsonObject extends ValueGetter<JsonObject, String> implements Seria
         return this.toString(1, null);
     }
 
-    public String toString(int index, char[] lastTab) {
+    String toString(int index, char[] lastTab) {
         StringBuilder builder = new StringBuilder();
         char[] tab = new char[index * 2];
         for (int i = 0; i < index * 2; i++) {

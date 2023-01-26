@@ -87,22 +87,45 @@ repositories {
 ## Methods
 ### JsonObject
 - `toString()` get json string
-- `toStringBeauty()` get the json string, but it has line breaks and tabs
-- `put(key, value)` put item into JsonObject
+- `toStringBeauty()` get the json string, with line breaks and tabs
+- `addAll(jsonObject)` add all key and value from other jsonObject
+- `put(key, value)` put a value into JsonObject
+- `remove(key)` remove a value from JsonObject
 - `containsKey(key)` return true, if there is a key in JsonObject
 - `notNull(key)` return true, if there is a key in JsonObject and the value is not null
 
-- `getjson(key)` get JsonObject
+- `getJson(key)` get JsonObject
 - `getArray(key)` get JsonArray
 - `getString(key)` get String
 - `getInt(key)` get int value
 - `getLong(key)` get long value
+- `getBigInteger(key)` get BigInteger value
 - `getFloat(key)` get float value
 - `getDouble(key)` get double value
+- `getBigDecimal(key)` get BigDecimal value
 - `getBoolean(key)` get boolean value
-- `getBigInteger(key)` get BigInteger
-- `getItem(key)` get Item content with keys and values
 - `getObject(key)` get value as Object
-- `Items()` get all Item in JsonObject
-- `toJsonArray()` if the input is array base type, it can change type from JsonObject to JsonArray
+- `get(key)` get value
 ### JsonArray
+- `toString()` get json array string
+- `toStringBeauty()` get the json array string, with line breaks and tabs
+- `add(value)` add a value into JsonArray
+- `addAll(jsonArray)` add all value from other jsonArray
+- `set(index, value)` set a value in JsonArray
+- `remove(index)` remove a value from JsonArray
+- `toArray(index)` to Object array
+- `content(value)` check if JsonArray content value
+- `indexOf(value)` the index of a value in JsonArray 
+
+- `getJson(index)` get JsonObject
+- `getArray(index)` get JsonArray
+- `getString(index)` get String
+- `getInt(index)` get int value
+- `getLong(index)` get long value
+- `getBigInteger(index)` get BigInteger value
+- `getFloat(index)` get float value
+- `getDouble(index)` get double value
+- `getBigDecimal(index)` get BigDecimal value
+- `getBoolean(index)` get boolean value
+- `getObject(index)` get value as Object
+- `get(index)` get value
