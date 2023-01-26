@@ -41,7 +41,7 @@ JsonArray jsonArray = new JsonArray();
 ```
 **Parse jsonArray, and get value**
 ```java
-javaString rawData = "[\"Hello\", \"World\", 17]";
+String rawData = "[\"Hello\", \"World\", 17]";
 JsonArray result = new JsonArray(rawData);
 System.out.println(result.getString(0));
 System.out.println(result.getString(1));
