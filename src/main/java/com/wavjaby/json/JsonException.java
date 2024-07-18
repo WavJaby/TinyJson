@@ -9,7 +9,7 @@ public class JsonException extends RuntimeException {
         super(message);
     }
 
-    public JsonException(final String message, final int line, final int index) {
-        super(message + " at " + line + ":" + index);
+    public JsonException(final String message, final JsonReader reader) {
+        super(message + reader.createPart());
     }
 }
