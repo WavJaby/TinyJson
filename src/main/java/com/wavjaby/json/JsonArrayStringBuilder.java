@@ -1,59 +1,49 @@
 package com.wavjaby.json;
 
-import com.wavjaby.json.list.ListedJsonObject;
-
-public class JsonArrayBuilder {
+public class JsonArrayStringBuilder {
     final StringBuilder builder = new StringBuilder();
 
-    public JsonArrayBuilder append(StringBuilder value) {
+    public JsonArrayStringBuilder append(StringBuilder value) {
         builder.append(',').append('"').append(value).append('"');
         return this;
     }
 
-    public JsonArrayBuilder append(String value) {
+    public JsonArrayStringBuilder append(String value) {
         if (value == null)
             builder.append(',').append((String) null);
-        else
-            builder.append(',').append('"').append(value).append('"');
+        else {
+            builder.append(',');
+            JsonObject.makeQuote(value, builder);
+        }
         return this;
     }
 
-    public JsonArrayBuilder appendRaw(String value) {
+    public JsonArrayStringBuilder appendRaw(String value) {
         builder.append(',').append(value);
         return this;
     }
 
-    public JsonArrayBuilder append(long value) {
-        builder.append(',').append(value);
-        return this;
-    }
-
-    public JsonArrayBuilder append(int value) {
-        builder.append(',').append(value);
-        return this;
-    }
-
-    public JsonArrayBuilder append(double value) {
-        builder.append(',').append(value);
-        return this;
-    }
-
-    public JsonArrayBuilder append(float value) {
-        builder.append(',').append(value);
-        return this;
-    }
-
-    public JsonArrayBuilder append(boolean value) {
-        builder.append(',').append(value);
-        return this;
-    }
-
-    public JsonArrayBuilder appendNull() {
+    public JsonArrayStringBuilder append() {
         builder.append(',').append((String) null);
         return this;
     }
 
-    public JsonArrayBuilder append(JsonBuilder jsonBuilder) {
+    public JsonArrayStringBuilder append(Number value) {
+        builder.append(',').append(value);
+        return this;
+    }
+
+    public JsonArrayStringBuilder append(JsonObject value) {
+        builder.append(',').append(value);
+        return this;
+    }
+
+    public JsonArrayStringBuilder append(JsonArray value) {
+        builder.append(',').append(value);
+        return this;
+    }
+
+    public JsonArrayStringBuilder append(JsonObjectStringBuilder jsonBuilder) {
         if (jsonBuilder == null) {
             builder.append(',').append((String) null);
             return this;
@@ -66,7 +56,7 @@ public class JsonArrayBuilder {
         return this;
     }
 
-    public JsonArrayBuilder append(JsonArrayBuilder jsonArrayBuilder) {
+    public JsonArrayStringBuilder append(JsonArrayStringBuilder jsonArrayBuilder) {
         if (jsonArrayBuilder == null) {
             builder.append(',').append((String) null);
             return this;
@@ -79,25 +69,6 @@ public class JsonArrayBuilder {
         return this;
     }
 
-    public JsonArrayBuilder append(ListedJsonObject json) {
-        if (json == null) {
-            builder.append(',').append((String) null);
-            return this;
-        }
-        builder.append(',').append(json.toString());
-        return this;
-    }
-
-    public JsonArrayBuilder append(JsonArray jsonArray) {
-        if (jsonArray == null) {
-            builder.append(',').append((String) null);
-            return this;
-        }
-        builder.append(',').append(jsonArray.toString());
-        return this;
-    }
-
-
     @Override
     public String toString() {
         if (builder.length() > 0) {
@@ -108,5 +79,9 @@ public class JsonArrayBuilder {
             return out;
         } else
             return "[]";
+    }
+
+    public StringBuilder getBuilder() {
+        return builder;
     }
 }
