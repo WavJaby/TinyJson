@@ -1,6 +1,6 @@
 import com.wavjaby.json.JsonArray;
 import com.wavjaby.json.JsonObject;
-import com.wavjaby.json.list.ListedJsonObject;
+import com.wavjaby.json.ListedJsonObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -28,6 +28,46 @@ public class test {
         assertEquals("[]", listedJsonObjectButArray.toString());
         assertEquals("{}", listedJsonObject.toString());
         assertEquals("{}", jsonObject.toString());
+    }
+
+    @Test
+    public void jsonErrorTest() {
+        String jsonWithError = "{\n" +
+                "    \"registered\\u0077\": null,\n" +
+                "    \"_id\": \"\\\"63d238c2de7eacc4b1ad9fa7\",\n" +
+                "    \"guid\": \"5a68422f-955d-4082-9bf7-8d4c6f804764\",\n" +
+                "    \"isActive\": false,\n" +
+                "    \"name\": \"Christensen Merrill\",\n" +
+                "    \"latitude\": 29.222857,\n" +
+                "    \"longitude\": -24.634618,\n" +
+                "    \"tags\": [\n" +
+                "        \"nulla\",\n" +
+                "        \"adipisicing\",\n" +
+                "        \"laborum\",\n" +
+                "        \"dolore\"\n" +
+                "    ],\n" +
+                "    \"greeting\": \"Hello, Christensen Merrill! \\nYou have 10 unread messages.\",\n" +
+                "    \"float1\": -5.282470793050557e-10,\n" +
+                "    \"float2\": 2.767696079401829e+24,\n" +
+                "    \"int\": -1811226837,\n" +
+                "    \"long\": 3006307585353351000\n" +
+                "}";
+//        System.out.println(jsonWithError);
+        try {
+            JsonObject jsonObject = new JsonObject(jsonWithError);
+            System.out.println(jsonObject.getString("greeting"));
+            System.out.println(jsonObject.getString("_id"));
+            System.out.println(jsonObject.toStringBeauty());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            JSONObject jsonObject = new JSONObject(jsonWithError);
+            System.out.println(jsonObject.getString("greeting"));
+            System.out.println(jsonObject.toString(4));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -131,13 +171,21 @@ public class test {
 
         String result = null;
         try {
-            result = new String(Files.readAllBytes(Paths.get("src\\test\\JsonText.json")));
+            InputStream stream = Files.newInputStream(Paths.get("src\\test\\resources\\JsonTextBig.json"));
+            InputStreamReader inputReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+            CharArrayWriter out = new CharArrayWriter();
+            char[] buff = new char[1024];
+            int len;
+            while ((len = inputReader.read(buff, 0, buff.length)) > 0)
+                out.write(buff, 0, len);
+            inputReader.close();
+            result = new String(out.toCharArray());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         int avgTimes = 10;
-        int times = 10;
+        int times = 15;
         long startTime;
         long endTime;
 
@@ -148,7 +196,7 @@ public class test {
         System.out.println("loop " + times + " times");
         System.out.println("avg " + avgTimes + " times");
 
-        Thread.sleep(5000);
+        Thread.sleep(3000);
 
         for (int k = 0; k < avgTimes; k++) {
             startTime = System.nanoTime();
@@ -159,14 +207,12 @@ public class test {
                     assertTrue(info.containsKey("about"));
                     assertTrue(info.containsKey("_id"));
                 }
+                String ignore_ = data.toString();
             }
             endTime = System.nanoTime();
             tinyJsonTime += ((endTime - startTime) / times);
             System.out.println("TinyJson: " + (double) ((endTime - startTime) / times) / 1000000d + "ms");
-        }
-        System.out.println("TinyJson avg: " + (double) (tinyJsonTime / avgTimes) / 1000000d + "ms");
 
-        for (int k = 0; k < avgTimes; k++) {
             startTime = System.nanoTime();
             for (int i = 0; i < times; i++) {
                 JSONArray data = new JSONArray(result);
@@ -175,11 +221,13 @@ public class test {
                     assertTrue(info.has("about"));
                     assertTrue(info.has("_id"));
                 }
+                String ignore_ = data.toString();
             }
             endTime = System.nanoTime();
             orgJsonTime += ((endTime - startTime) / times);
             System.out.println("OrgJson: " + (double) ((endTime - startTime) / times) / 1000000d + "ms");
         }
+        System.out.println("TinyJson avg: " + (double) (tinyJsonTime / avgTimes) / 1000000d + "ms");
         System.out.println("OrgJson avg: " + (double) (orgJsonTime / avgTimes) / 1000000d + "ms");
     }
 
