@@ -1,9 +1,4 @@
-package com.wavjaby.json.list;
-
-import com.wavjaby.json.JsonArray;
-import com.wavjaby.json.JsonException;
-import com.wavjaby.json.JsonObjectReader;
-import com.wavjaby.json.ValueGetter;
+package com.wavjaby.json;
 
 import java.io.Serializable;
 
@@ -14,16 +9,45 @@ public class ListedJsonObject extends ValueGetter<ListedJsonObject, String> impl
     public int length;
     JsonArray isJsonArray = null;
 
+    public static class Item implements Serializable {
+        final String key;
+        Object value;
+
+        Item(String key, Object value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @SuppressWarnings("unused")
+        public String getKey() {
+            return key;
+        }
+
+        @SuppressWarnings("unused")
+        public Object getValue() {
+            return value;
+        }
+
+        void setValue(Object value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return key + ": " + value;
+        }
+    }
+
     @SuppressWarnings("unused")
     public ListedJsonObject() {
         length = 0;
     }
 
     public ListedJsonObject(String input) {
-        this(new JsonObjectReader(input));
+        this(new JsonReader(input));
     }
 
-    public ListedJsonObject(JsonObjectReader reader) {
+    public ListedJsonObject(JsonReader reader) {
         length = 0;
         reader.findJsonStart();
         if (reader.thisChar() == '[') {
@@ -36,21 +60,24 @@ public class ListedJsonObject extends ValueGetter<ListedJsonObject, String> impl
         while ((nextChar = reader.nextChar()) != '\0') {
             if (nextChar == ',') {
                 if (isValue)
-                    throw new JsonException("missing value at: " + reader.i);
+                    throw new JsonException("Missing value", reader);
                 nextChar = reader.nextChar();
             }
             if (nextChar == '}') {
                 if (isValue)
-                    throw new JsonException("missing value at: " + reader.i);
+                    throw new JsonException("Missing value", reader);
                 return;
             }
             switch (nextChar) {
                 case '"':
                     if (isValue) {
                         append(new Item(key, reader.readString()));
+                        key = null;
                         isValue = false;
-                    } else
+                    } else if (key == null)
                         key = reader.readString();
+                    else
+                        throw new JsonException("Missing ':' after a key", reader);
                     break;
                 case ':':
                     if (!isValue)
@@ -59,23 +86,26 @@ public class ListedJsonObject extends ValueGetter<ListedJsonObject, String> impl
                 case '[':
                     if (isValue) {
                         append(new Item(key, new JsonArray(reader, true)));
+                        key = null;
                         isValue = false;
                     }
                     break;
                 case '{':
                     if (isValue) {
                         append(new Item(key, new ListedJsonObject(reader)));
+                        key = null;
                         isValue = false;
                     }
                     break;
                 default:
                     if (isValue) {
                         append(new Item(key, reader.readValue()));
+                        key = null;
                         isValue = false;
                     }
             }
         }
-        throw new JsonException("JsonObject must end with '}'");
+        throw new JsonException("JsonObject must end with '}',", reader);
     }
 
     @SuppressWarnings("unused")
@@ -237,37 +267,24 @@ public class ListedJsonObject extends ValueGetter<ListedJsonObject, String> impl
 
     @SuppressWarnings("unused")
     public String toStringBeauty() {
-        return this.isJsonArray != null ? this.isJsonArray.toStringBeauty() : this.toString(1, null);
+        return this.isJsonArray != null ? this.isJsonArray.toStringBeauty() : this.toString(4, 1, null);
     }
 
-    public String toString(int index, char[] lastTab) {
+    String toString(int tabSize, int index, char[] lastTab) {
         StringBuilder builder = new StringBuilder();
-        char[] tab = new char[index * 2];
-        for (int i = 0; i < index * 2; i++) {
-            tab[i] = ' ';
-        }
+        char[] tab = JsonObject.createTab(tabSize, index, lastTab);
         builder.append('{');
         if (length > 0)
             builder.append('\n');
 
         for (int i = 0; i < this.length; ++i) {
             Item item = this.items[i];
-            builder.append(tab).append('\"').append(item.key).append(index < 0 ? "\":" : "\": ");
-            if (item.value == null)
-                builder.append("null");
-            else if (item.value instanceof ListedJsonObject)
-                builder.append(((ListedJsonObject) item.value).toString(index + 1, tab));
-            else if (item.value instanceof JsonArray)
-                builder.append(((JsonArray) item.value).toString(index + 1, tab));
-            else if (item.value instanceof String)
-                builder.append('\"').append(item.value).append('\"');
-            else
-                builder.append(item.value);
-
-            if (i < length - 1)
-                builder.append(",");
-            builder.append("\n");
+            builder.append(tab);
+            JsonObject.makeQuote(item.getKey(), builder);
+            builder.append(": ");
+            JsonObject.appendValue(item.value, i < length - 1, tabSize, index, tab, builder);
         }
+
         if (lastTab != null && length > 0)
             builder.append(lastTab);
         builder.append("}");
