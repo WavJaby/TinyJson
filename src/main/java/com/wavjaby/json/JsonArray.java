@@ -1,9 +1,11 @@
 package com.wavjaby.json;
 
-import com.wavjaby.json.list.ListedJsonObject;
-
+import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -19,17 +21,25 @@ public class JsonArray extends ValueGetter<JsonArray, Integer> implements Serial
         length = 0;
     }
 
-    public JsonArray(String input, boolean useListedJson) {
-        this(new JsonObjectReader(input), useListedJson);
+    public JsonArray(InputStream input) {
+        this(new JsonReader(input, StandardCharsets.UTF_8), false);
+    }
 
+    public JsonArray(InputStream input, Charset charset) {
+        this(new JsonReader(input, charset), false);
+    }
+
+    @SuppressWarnings("unused")
+    public JsonArray(String input, boolean useListedJson) {
+        this(new JsonReader(input), useListedJson);
     }
 
     @SuppressWarnings("unused")
     public JsonArray(String input) {
-        this(new JsonObjectReader(input), false);
+        this(new JsonReader(input), false);
     }
 
-    public JsonArray(JsonObjectReader reader, boolean useListedJson) {
+    public JsonArray(JsonReader reader, boolean useListedJson) {
         this.length = 0;
         reader.findArrayStart();
         char nextChar;
@@ -52,7 +62,15 @@ public class JsonArray extends ValueGetter<JsonArray, Integer> implements Serial
                     add(reader.readValue());
             }
         }
-        throw new JsonException("JsonArray must end with ']'");
+        throw new JsonException("JsonArray must end with ']',", reader);
+    }
+
+    public JsonArray(Collection<?> collection) {
+        length = collection.size();
+        items = new Object[length];
+        int i = 0;
+        for (Object o : collection)
+            items[i++] = JsonObject.warpValue(o);
     }
 
     @Override
@@ -92,7 +110,7 @@ public class JsonArray extends ValueGetter<JsonArray, Integer> implements Serial
         return this;
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "UnusedReturnValue"})
     public JsonArray remove(int index) {
         if (index >= length)
             return this;
@@ -102,13 +120,6 @@ public class JsonArray extends ValueGetter<JsonArray, Integer> implements Serial
         if (length < (items.length >> 2))
             arrayChangeLength(length);
         return this;
-    }
-
-    @SuppressWarnings("unused")
-    public Object[] toArray() {
-        Object[] result = new Object[length];
-        System.arraycopy(items, 0, result, 0, length);
-        return result;
     }
 
     /**
@@ -128,7 +139,6 @@ public class JsonArray extends ValueGetter<JsonArray, Integer> implements Serial
     /**
      * find key index
      */
-
     @SuppressWarnings("unused")
     public boolean content(Object value) {
         return indexOf(value) != -1;
@@ -162,12 +172,12 @@ public class JsonArray extends ValueGetter<JsonArray, Integer> implements Serial
             if (item == null)
                 builder.append("null");
             else if (item instanceof String)
-                builder.append('\"').append(item).append('\"');
+                JsonObject.makeQuote((String) item, builder);
             else
                 builder.append(item);
 
             if (i < length - 1)
-                builder.append(",");
+                builder.append(',');
         }
         builder.append(']');
         return builder.toString();
@@ -175,49 +185,31 @@ public class JsonArray extends ValueGetter<JsonArray, Integer> implements Serial
 
     @SuppressWarnings("unused")
     public String toStringBeauty() {
-        return toString(1, null);
+        return toString(4, 1, null);
     }
 
-    public String toString(int index, char[] lastTab) {
+    String toString(int tabSize, int index, char[] lastTab) {
         StringBuilder builder = new StringBuilder();
-        char[] tab = new char[index * 2];
-        for (int i = 0; i < index * 2; i++) {
-            tab[i] = ' ';
-        }
+        char[] tab = JsonObject.createTab(tabSize, index, lastTab);
+
         builder.append('[');
         if (length > 0)
             builder.append('\n');
 
         for (int i = 0; i < length; ++i) {
-            Object item = items[i];
-            if (item == null)
-                builder.append(tab).append("null");
-            else if (item instanceof JsonObject)
-                builder.append(tab).append(((JsonObject) item).toString(index + 1, tab));
-            else if (item instanceof JsonArray)
-                builder.append(tab).append(((JsonArray) item).toString(index + 1, tab));
-            else if (item instanceof String)
-                builder.append(tab).append('\"').append(item).append('\"');
-            else if (item instanceof ListedJsonObject)
-                builder.append(tab).append(((ListedJsonObject) item).toString(index + 1, tab));
-            else
-                builder.append(tab).append(item);
-
-
-            if (i < length - 1)
-                builder.append(",");
-            builder.append("\n");
+            builder.append(tab);
+            JsonObject.appendValue(items[i], i < length - 1, tabSize, index, tab, builder);
         }
 
         if (lastTab != null && length > 0)
             builder.append(lastTab);
-        builder.append("]");
+        builder.append(']');
 
         return builder.toString();
     }
 
     /**
-     * use in foreach
+     * Iterator
      */
     @Override
     public Iterator<Object> iterator() {
@@ -227,6 +219,13 @@ public class JsonArray extends ValueGetter<JsonArray, Integer> implements Serial
     @SuppressWarnings("unused")
     public Stream<Object> stream() {
         return StreamSupport.stream(spliterator(), false);
+    }
+
+    @SuppressWarnings("unused")
+    public Object[] toArray() {
+        Object[] result = new Object[length];
+        System.arraycopy(items, 0, result, 0, length);
+        return result;
     }
 }
 
